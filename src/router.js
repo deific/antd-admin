@@ -1,21 +1,15 @@
-import React, { PropTypes } from 'react'
+import React from 'react'
+import PropTypes from 'prop-types'
 import { Router } from 'dva/router'
-// import pathToRegexp from 'path-to-regexp'
 import App from './routes/app'
 
-const cached = {}
 const registerModel = (app, model) => {
-  if (!cached[model.namespace]) {
+  if (!(app._models.filter(m => m.namespace === model.namespace).length === 1)) {
     app.model(model)
-    cached[model.namespace] = 1
   }
 }
 
 const Routers = function ({ history, app }) {
-  const handleChildRoute = ({ location, params, routes }) => {
-    console.log(location, params, routes)
-  }
-
   const routes = [
     {
       path: '/',
@@ -36,12 +30,28 @@ const Routers = function ({ history, app }) {
             }, 'dashboard')
           },
         }, {
-          path: 'users',
+          path: 'user',
           getComponent (nextState, cb) {
             require.ensure([], require => {
-              registerModel(app, require('./models/users'))
-              cb(null, require('./routes/users/'))
-            }, 'users')
+              registerModel(app, require('./models/user'))
+              cb(null, require('./routes/user/'))
+            }, 'user')
+          },
+        }, {
+          path: 'user/:id',
+          getComponent (nextState, cb) {
+            require.ensure([], require => {
+              registerModel(app, require('./models/user/detail'))
+              cb(null, require('./routes/user/detail/'))
+            }, 'user-detail')
+          },
+        }, {
+          path: 'login',
+          getComponent (nextState, cb) {
+            require.ensure([], require => {
+              registerModel(app, require('./models/login'))
+              cb(null, require('./routes/login/'))
+            }, 'login')
           },
         }, {
           path: 'request',
@@ -124,11 +134,6 @@ const Routers = function ({ history, app }) {
       ],
     },
   ]
-
-  routes[0].childRoutes.map(item => {
-    item.onEnter = handleChildRoute
-    return item
-  })
 
   return <Router history={history} routes={routes} />
 }
